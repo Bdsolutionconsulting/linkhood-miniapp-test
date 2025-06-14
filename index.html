@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LinkHood Test</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: var(--tg-theme-bg-color, #ffffff);
+            color: var(--tg-theme-text-color, #000000);
+            text-align: center;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        
+        .container {
+            max-width: 320px;
+            margin: 0 auto;
+            padding: 20px;
+            background: var(--tg-theme-secondary-bg-color, #f8f9fa);
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .logo {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        
+        .title {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: var(--tg-theme-button-color, #0088cc);
+            margin-bottom: 20px;
+        }
+        
+        .message {
+            font-size: 1.1em;
+            margin-bottom: 20px;
+            line-height: 1.4;
+        }
+        
+        .phone-number {
+            font-weight: bold;
+            color: var(--tg-theme-button-color, #0088cc);
+            background: var(--tg-theme-bg-color, #ffffff);
+            padding: 8px 12px;
+            border-radius: 8px;
+            display: inline-block;
+            margin: 10px 0;
+        }
+        
+        .buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin: 30px 0;
+        }
+        
+        .btn {
+            padding: 15px 25px;
+            font-size: 1.1em;
+            font-weight: bold;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            min-width: 100px;
+        }
+        
+        .btn-yes {
+            background: #28a745;
+            color: white;
+        }
+        
+        .btn-yes:hover {
+            background: #218838;
+            transform: translateY(-2px);
+        }
+        
+        .btn-no {
+            background: #dc3545;
+            color: white;
+        }
+        
+        .btn-no:hover {
+            background: #c82333;
+            transform: translateY(-2px);
+        }
+        
+        .status {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            font-weight: bold;
+        }
+        
+        .status.waiting {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+        
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .debug-info {
+            margin-top: 30px;
+            padding: 15px;
+            background: #e9ecef;
+            border-radius: 8px;
+            font-size: 0.9em;
+            text-align: left;
+        }
+        
+        .debug-title {
+            font-weight: bold;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo">🔗</div>
+        <div class="title">LinkHood Test</div>
+        
+        <div class="message">
+            Confirmer l'inscription pour le numéro :
+            <div class="phone-number" id="phoneDisplay">Chargement...</div>
+        </div>
+        
+        <div class="buttons">
+            <button class="btn btn-yes" onclick="respond(true)" id="btnYes">
+                ✅ OUI
+            </button>
+            <button class="btn btn-no" onclick="respond(false)" id="btnNo">
+                ❌ NON
+            </button>
+        </div>
+        
+        <div class="status waiting" id="status">
+            ⏳ En attente de votre choix...
+        </div>
+        
+        <div class="debug-info">
+            <div class="debug-title">🔧 Debug Info</div>
+            <div><strong>URL Params:</strong> <span id="debugParams">-</span></div>
+            <div><strong>User ID:</strong> <span id="debugUserId">-</span></div>
+            <div><strong>Platform:</strong> <span id="debugPlatform">-</span></div>
+            <div><strong>Version:</strong> <span id="debugVersion">-</span></div>
+        </div>
+    </div>
+
+    <script>
+        // Initialisation Telegram WebApp
+        let tg = window.Telegram.WebApp;
+        tg.expand();
+        tg.ready();
+
+        // Variables globales
+        let phoneNumber = null;
+        let hasResponded = false;
+
+        // Fonction d'initialisation
+        function init() {
+            // Récupération du numéro depuis les paramètres
+            const urlParams = new URLSearchParams(window.location.search);
+            phoneNumber = urlParams.get('start') || urlParams.get('startapp') || 'Non défini';
+            
+            // Affichage du numéro
+            document.getElementById('phoneDisplay').textContent = phoneNumber;
+            
+            // Debug info
+            updateDebugInfo(urlParams);
+            
+            console.log('🚀 LinkHood Mini App initialisée');
+            console.log('📱 Numéro détecté:', phoneNumber);
+            console.log('👤 User Telegram:', tg.initDataUnsafe?.user);
+        }
+        
+        // Mise à jour des infos de debug
+        function updateDebugInfo(urlParams) {
+            document.getElementById('debugParams').textContent = window.location.search || 'Aucun';
+            document.getElementById('debugUserId').textContent = tg.initDataUnsafe?.user?.id || 'Non disponible';
+            document.getElementById('debugPlatform').textContent = tg.platform || 'Non détecté';
+            document.getElementById('debugVersion').textContent = tg.version || 'Non disponible';
+        }
+        
+        // Fonction de réponse
+        function respond(choice) {
+            if (hasResponded) {
+                console.log('⚠️ Réponse déjà envoyée');
+                return;
+            }
+            
+            hasResponded = true;
+            
+            // Désactivation des boutons
+            document.getElementById('btnYes').disabled = true;
+            document.getElementById('btnNo').disabled = true;
+            
+            // Mise à jour du status
+            const statusEl = document.getElementById('status');
+            
+            if (choice) {
+                statusEl.className = 'status success';
+                statusEl.innerHTML = '✅ Inscription confirmée !';
+            } else {
+                statusEl.className = 'status error';
+                statusEl.innerHTML = '❌ Inscription annulée';
+            }
+            
+            // Données à envoyer
+            const responseData = {
+                phoneNumber: phoneNumber,
+                choice: choice,
+                telegramUserId: tg.initDataUnsafe?.user?.id,
+                telegramUsername: tg.initDataUnsafe?.user?.username,
+                timestamp: new Date().toISOString(),
+                platform: tg.platform,
+                version: tg.version
+            };
+            
+            // Log console pour validation
+            console.log('📤 Réponse LinkHood:', responseData);
+            
+            // Simulation d'envoi API (à remplacer par vraie API)
+            setTimeout(() => {
+                console.log('✅ Réponse envoyée avec succès (simulé)');
+                
+                // Optionnel: Fermer la Mini App après 3 secondes
+                setTimeout(() => {
+                    tg.close();
+                }, 3000);
+            }, 1000);
+            
+            // Feedback haptique si disponible
+            if (tg.HapticFeedback) {
+                tg.HapticFeedback.impactOccurred('medium');
+            }
+        }
+        
+        // Gestion des erreurs
+        window.addEventListener('error', function(e) {
+            console.error('❌ Erreur Mini App:', e.error);
+            document.getElementById('status').innerHTML = '⚠️ Erreur technique';
+        });
+        
+        // Initialisation au chargement
+        document.addEventListener('DOMContentLoaded', init);
+        
+        // Debug: Log des events Telegram
+        tg.onEvent('mainButtonClicked', () => console.log('Main button clicked'));
+        tg.onEvent('backButtonClicked', () => console.log('Back button clicked'));
+    </script>
+</body>
+</html>
