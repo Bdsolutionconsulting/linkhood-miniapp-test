@@ -139,10 +139,10 @@
         </div>
         
         <div class="button-group">
-            <button class="btn btn-yes" onclick="confirmRegistration(true)">
+            <button class="btn btn-yes" onclick="handleChoice(true)">
                 ✅ OUI
             </button>
-            <button class="btn btn-no" onclick="confirmRegistration(false)">
+            <button class="btn btn-no" onclick="handleChoice(false)">
                 ❌ NON
             </button>
         </div>
@@ -151,7 +151,7 @@
             ⏳ En attente de votre choix...
         </div>
         
-        <button class="cancel-btn" onclick="cancelRegistration()">
+        <button class="cancel-btn" onclick="handleCancel()">
             ❌ Inscription annulée
         </button>
         
@@ -165,119 +165,140 @@
     </div>
 
     <script>
+        console.log('Script started');
+        
         // Variables globales
-        let currentPhoneNumber = null;
-
-        // Fonction pour extraire les paramètres de l'URL
-        function getUrlParams() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const startApp = urlParams.get('startapp');
-            return {
-                startapp: startApp
-            };
-        }
-
-        // Fonction pour extraire le numéro de téléphone
-        function extractPhoneNumber() {
-            let phoneNumber = null;
-            
-            // 1. Depuis les paramètres URL (version web)
-            const params = getUrlParams();
-            if (params.startapp) {
-                phoneNumber = params.startapp;
-                console.log('📱 Numéro trouvé via URL startapp:', phoneNumber);
-                return phoneNumber;
-            }
-            
-            // 2. Depuis Telegram WebApp (version Telegram)
-            if (window.Telegram && window.Telegram.WebApp) {
-                if (window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.start_param) {
-                    phoneNumber = window.Telegram.WebApp.initDataUnsafe.start_param;
-                    console.log('📱 Numéro trouvé via start_param:', phoneNumber);
-                    return phoneNumber;
+        var phoneNumber = null;
+        var telegramUserId = null;
+        
+        // Fonction pour extraire le numéro depuis l'URL
+        function getPhoneFromUrl() {
+            try {
+                var url = window.location.href;
+                console.log('URL complete:', url);
+                
+                if (url.indexOf('startapp=') !== -1) {
+                    var parts = url.split('startapp=');
+                    if (parts.length > 1) {
+                        var phone = parts[1].split('&')[0];
+                        console.log('Numero trouve dans URL:', phone);
+                        return phone;
+                    }
                 }
                 
-                if (window.Telegram.WebApp.startParam) {
-                    phoneNumber = window.Telegram.WebApp.startParam;
-                    console.log('📱 Numéro trouvé via WebApp.startParam:', phoneNumber);
-                    return phoneNumber;
+                var urlParams = new URLSearchParams(window.location.search);
+                var startapp = urlParams.get('startapp');
+                if (startapp) {
+                    console.log('Numero trouve via URLSearchParams:', startapp);
+                    return startapp;
                 }
+                
+                console.log('Aucun numero dans URL');
+                return null;
+            } catch (e) {
+                console.log('Erreur extraction URL:', e);
+                return null;
+            }
+        }
+        
+        // Fonction pour extraire les données Telegram
+        function getTelegramData() {
+            try {
+                if (window.Telegram && window.Telegram.WebApp) {
+                    console.log('Telegram WebApp disponible');
+                    
+                    var webApp = window.Telegram.WebApp;
+                    console.log('WebApp data:', webApp);
+                    
+                    if (webApp.initDataUnsafe && webApp.initDataUnsafe.user) {
+                        telegramUserId = webApp.initDataUnsafe.user.id;
+                        console.log('User ID trouve:', telegramUserId);
+                    }
+                    
+                    if (webApp.initDataUnsafe && webApp.initDataUnsafe.start_param) {
+                        var startParam = webApp.initDataUnsafe.start_param;
+                        console.log('Start param trouve:', startParam);
+                        return startParam;
+                    }
+                    
+                    if (webApp.startParam) {
+                        console.log('StartParam trouve:', webApp.startParam);
+                        return webApp.startParam;
+                    }
+                }
+                
+                console.log('Telegram WebApp non disponible ou pas de start_param');
+                return null;
+            } catch (e) {
+                console.log('Erreur Telegram:', e);
+                return null;
+            }
+        }
+        
+        // Fonction d'initialisation
+        function initApp() {
+            console.log('Initialisation de app');
+            
+            // Essayer d'extraire le numéro
+            phoneNumber = getPhoneFromUrl();
+            if (!phoneNumber) {
+                phoneNumber = getTelegramData();
             }
             
-            console.log('❌ Aucun numéro détecté');
-            return null;
-        }
-
-        // Initialisation
-        function initializeApp() {
-            console.log('🚀 LinkHood Mini App initialisée');
-            
-            // Extraire le numéro
-            currentPhoneNumber = extractPhoneNumber();
-            const phoneElement = document.getElementById('phoneNumber');
-            
-            if (currentPhoneNumber) {
-                phoneElement.textContent = '+' + currentPhoneNumber;
+            // Afficher le numéro
+            var phoneElement = document.getElementById('phoneNumber');
+            if (phoneNumber) {
+                phoneElement.textContent = '+' + phoneNumber;
                 phoneElement.style.color = '#27ae60';
-                console.log('✅ Numéro détecté:', currentPhoneNumber);
+                console.log('Numero affiche:', phoneNumber);
             } else {
                 phoneElement.textContent = 'Non défini';
                 phoneElement.style.color = '#e74c3c';
-                console.log('❌ Aucun numéro détecté');
+                console.log('Aucun numero a afficher');
             }
             
-            // Mise à jour des infos de debug
+            // Mettre à jour debug info
             updateDebugInfo();
             
-            // Configuration Telegram WebApp
+            // Configurer Telegram WebApp
             if (window.Telegram && window.Telegram.WebApp) {
                 window.Telegram.WebApp.ready();
                 window.Telegram.WebApp.expand();
-                
-                console.log('📋 Telegram WebApp Data:', window.Telegram.WebApp);
             }
         }
-
-        // Mise à jour des informations de debug
+        
+        // Mise à jour des infos debug
         function updateDebugInfo() {
-            const params = getUrlParams();
-            
-            document.getElementById('urlParams').textContent = params.startapp || 'Aucun';
-            
-            if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user) {
-                document.getElementById('userId').textContent = window.Telegram.WebApp.initDataUnsafe.user.id;
-            } else {
-                document.getElementById('userId').textContent = 'Non disponible';
-            }
-            
-            if (window.Telegram && window.Telegram.WebApp) {
-                document.getElementById('platform').textContent = window.Telegram.WebApp.platform || 'unknown';
-                document.getElementById('version').textContent = window.Telegram.WebApp.version || '6.0';
+            try {
+                var urlParams = new URLSearchParams(window.location.search);
+                document.getElementById('urlParams').textContent = urlParams.get('startapp') || 'Aucun';
+                document.getElementById('userId').textContent = telegramUserId || 'Non disponible';
+                
+                if (window.Telegram && window.Telegram.WebApp) {
+                    document.getElementById('platform').textContent = window.Telegram.WebApp.platform || 'unknown';
+                    document.getElementById('version').textContent = window.Telegram.WebApp.version || '6.0';
+                }
+            } catch (e) {
+                console.log('Erreur debug info:', e);
             }
         }
-
-        // Fonction de confirmation d'inscription
-        function confirmRegistration(choice) {
-            let userId = 'Non disponible';
-            if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user) {
-                userId = window.Telegram.WebApp.initDataUnsafe.user.id;
-            }
+        
+        // Gestion du choix utilisateur
+        function handleChoice(choice) {
+            console.log('Choix utilisateur:', choice);
+            console.log('Numero:', phoneNumber);
+            console.log('User ID:', telegramUserId);
             
-            console.log('📞 Choix utilisateur:', choice ? 'OUI' : 'NON');
-            console.log('📱 Numéro:', currentPhoneNumber);
-            console.log('👤 User ID:', userId);
-            
-            const responseData = {
-                phoneNumber: currentPhoneNumber,
+            var responseData = {
+                phoneNumber: phoneNumber,
                 choice: choice,
-                telegramUserId: userId,
+                telegramUserId: telegramUserId,
                 timestamp: new Date().toISOString()
             };
             
-            console.log('📤 Réponse LinkHood:', responseData);
+            console.log('Reponse complete:', responseData);
             
-            // Simulation d'envoi à l'API LinkHood
-            const statusElement = document.querySelector('.status');
+            var statusElement = document.querySelector('.status');
             if (choice) {
                 statusElement.innerHTML = '✅ Réponse envoyée avec succès (simulé)';
                 statusElement.style.background = '#d4edda';
@@ -288,12 +309,12 @@
                 statusElement.style.color = '#721c24';
             }
         }
-
-        // Fonction d'annulation
-        function cancelRegistration() {
-            console.log('❌ Inscription annulée par l'utilisateur');
+        
+        // Gestion de l'annulation
+        function handleCancel() {
+            console.log('Inscription annulee');
             
-            const statusElement = document.querySelector('.status');
+            var statusElement = document.querySelector('.status');
             statusElement.innerHTML = '❌ Inscription annulée';
             statusElement.style.background = '#f8d7da';
             statusElement.style.color = '#721c24';
@@ -302,21 +323,20 @@
                 window.Telegram.WebApp.close();
             }
         }
-
-        // Démarrage de l'application
+        
+        // Démarrage
         document.addEventListener('DOMContentLoaded', function() {
-            // Attendre un peu pour que Telegram WebApp se charge
-            setTimeout(initializeApp, 100);
+            console.log('DOM loaded');
+            setTimeout(initApp, 500);
         });
         
-        // Au cas où le script se charge après DOMContentLoaded
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', function() {
-                setTimeout(initializeApp, 100);
-            });
-        } else {
-            setTimeout(initializeApp, 100);
+        // Au cas où
+        if (document.readyState !== 'loading') {
+            console.log('DOM already loaded');
+            setTimeout(initApp, 500);
         }
+        
+        console.log('Script loaded');
     </script>
 </body>
 </html>
