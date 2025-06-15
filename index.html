@@ -7,131 +7,124 @@
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui;
             margin: 0;
             padding: 20px;
-            background: var(--tg-theme-bg-color, #ffffff);
-            color: var(--tg-theme-text-color, #000000);
-            text-align: center;
+            background: var(--tg-theme-bg-color, #f5f5f5);
+            color: var(--tg-theme-text-color, #333);
             min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
         }
         
         .container {
-            max-width: 320px;
+            max-width: 400px;
             margin: 0 auto;
-            padding: 20px;
-            background: var(--tg-theme-secondary-bg-color, #f8f9fa);
-            border-radius: 12px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            text-align: center;
         }
         
         .logo {
-            font-size: 2.5em;
-            margin-bottom: 10px;
+            font-size: 48px;
+            margin-bottom: 20px;
         }
         
         .title {
-            font-size: 1.5em;
+            font-size: 24px;
             font-weight: bold;
-            color: var(--tg-theme-button-color, #0088cc);
-            margin-bottom: 20px;
+            color: #3498db;
+            margin-bottom: 30px;
         }
         
-        .message {
-            font-size: 1.1em;
-            margin-bottom: 20px;
-            line-height: 1.4;
+        .phone-display {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .phone-label {
+            font-size: 16px;
+            color: #666;
+            margin-bottom: 10px;
         }
         
         .phone-number {
+            font-size: 20px;
             font-weight: bold;
-            color: var(--tg-theme-button-color, #0088cc);
-            background: var(--tg-theme-bg-color, #ffffff);
-            padding: 8px 12px;
-            border-radius: 8px;
-            display: inline-block;
-            margin: 10px 0;
+            color: #3498db;
+            margin-bottom: 20px;
         }
         
-        .buttons {
+        .button-group {
             display: flex;
             gap: 15px;
             justify-content: center;
-            margin: 30px 0;
+            margin-bottom: 20px;
         }
         
         .btn {
-            padding: 15px 25px;
-            font-size: 1.1em;
-            font-weight: bold;
+            padding: 15px 30px;
             border: none;
-            border-radius: 10px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
             cursor: pointer;
-            transition: all 0.3s ease;
-            min-width: 100px;
+            transition: all 0.3s;
+            min-width: 120px;
         }
         
         .btn-yes {
-            background: #28a745;
+            background: #27ae60;
             color: white;
         }
         
         .btn-yes:hover {
-            background: #218838;
-            transform: translateY(-2px);
+            background: #229954;
         }
         
         .btn-no {
-            background: #dc3545;
+            background: #e74c3c;
             color: white;
         }
         
         .btn-no:hover {
-            background: #c82333;
-            transform: translateY(-2px);
+            background: #c0392b;
         }
         
         .status {
-            margin-top: 20px;
-            padding: 15px;
-            border-radius: 8px;
-            font-weight: bold;
-        }
-        
-        .status.waiting {
             background: #fff3cd;
             color: #856404;
-            border: 1px solid #ffeaa7;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border-left: 4px solid #ffc107;
         }
         
-        .status.success {
-            background: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
-        }
-        
-        .status.error {
+        .cancel-btn {
             background: #f8d7da;
             color: #721c24;
-            border: 1px solid #f5c6cb;
+            padding: 12px 25px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            cursor: pointer;
+            margin-top: 10px;
         }
         
         .debug-info {
-            margin-top: 30px;
-            padding: 15px;
-            background: #e9ecef;
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
             border-radius: 8px;
-            font-size: 0.9em;
+            padding: 15px;
+            margin-top: 20px;
             text-align: left;
+            font-family: monospace;
+            font-size: 12px;
         }
         
-        .debug-title {
-            font-weight: bold;
+        .debug-info h4 {
+            margin-top: 0;
             margin-bottom: 10px;
-            text-align: center;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui;
         }
     </style>
 </head>
@@ -140,134 +133,163 @@
         <div class="logo">🔗</div>
         <div class="title">LinkHood Test</div>
         
-        <div class="message">
-            Confirmer l'inscription pour le numéro :
-            <div class="phone-number" id="phoneDisplay">Chargement...</div>
+        <div class="phone-display">
+            <div class="phone-label">Confirmer l'inscription pour le numéro :</div>
+            <div class="phone-number" id="phoneNumber">Chargement...</div>
         </div>
         
-        <div class="buttons">
-            <button class="btn btn-yes" onclick="respond(true)" id="btnYes">
+        <div class="button-group">
+            <button class="btn btn-yes" onclick="confirmRegistration(true)">
                 ✅ OUI
             </button>
-            <button class="btn btn-no" onclick="respond(false)" id="btnNo">
+            <button class="btn btn-no" onclick="confirmRegistration(false)">
                 ❌ NON
             </button>
         </div>
         
-        <div class="status waiting" id="status">
+        <div class="status">
             ⏳ En attente de votre choix...
         </div>
         
+        <button class="cancel-btn" onclick="cancelRegistration()">
+            ❌ Inscription annulée
+        </button>
+        
         <div class="debug-info">
-            <div class="debug-title">🔧 Debug Info</div>
-            <div><strong>URL Params:</strong> <span id="debugParams">-</span></div>
-            <div><strong>User ID:</strong> <span id="debugUserId">-</span></div>
-            <div><strong>Platform:</strong> <span id="debugPlatform">-</span></div>
-            <div><strong>Version:</strong> <span id="debugVersion">-</span></div>
+            <h4>🔧 Debug Info</h4>
+            <div><strong>URL Params:</strong> <span id="urlParams">Aucun</span></div>
+            <div><strong>User ID:</strong> <span id="userId">Non disponible</span></div>
+            <div><strong>Platform:</strong> <span id="platform">unknown</span></div>
+            <div><strong>Version:</strong> <span id="version">6.0</span></div>
         </div>
     </div>
 
     <script>
-        // Initialisation Telegram WebApp
-        let tg = window.Telegram.WebApp;
-        tg.expand();
-        tg.ready();
-
-        // Variables globales
-        let phoneNumber = null;
-        let hasResponded = false;
-
-        // Fonction d'initialisation
-        function init() {
-            // Récupération du numéro depuis les paramètres
+        // Fonction pour extraire les paramètres de l'URL
+        function getUrlParams() {
             const urlParams = new URLSearchParams(window.location.search);
-            phoneNumber = urlParams.get('start') || urlParams.get('startapp') || 'Non défini';
+            const startApp = urlParams.get('startapp');
+            return {
+                startapp: startApp,
+                tgWebAppStartParam: window.Telegram?.WebApp?.initDataUnsafe?.start_param
+            };
+        }
+
+        // Fonction pour extraire le numéro de téléphone
+        function extractPhoneNumber() {
+            const params = getUrlParams();
             
-            // Affichage du numéro
-            document.getElementById('phoneDisplay').textContent = phoneNumber;
+            // Essayer plusieurs sources
+            let phoneNumber = null;
             
-            // Debug info
-            updateDebugInfo(urlParams);
+            // 1. Depuis le paramètre start_param de Telegram WebApp
+            if (window.Telegram?.WebApp?.initDataUnsafe?.start_param) {
+                phoneNumber = window.Telegram.WebApp.initDataUnsafe.start_param;
+                console.log('📱 Numéro trouvé via start_param:', phoneNumber);
+            }
             
+            // 2. Depuis les paramètres URL
+            else if (params.startapp) {
+                phoneNumber = params.startapp;
+                console.log('📱 Numéro trouvé via URL startapp:', phoneNumber);
+            }
+            
+            // 3. Depuis Telegram WebApp startParam
+            else if (window.Telegram?.WebApp?.startParam) {
+                phoneNumber = window.Telegram.WebApp.startParam;
+                console.log('📱 Numéro trouvé via WebApp.startParam:', phoneNumber);
+            }
+            
+            return phoneNumber;
+        }
+
+        // Initialisation
+        function initializeApp() {
             console.log('🚀 LinkHood Mini App initialisée');
-            console.log('📱 Numéro détecté:', phoneNumber);
-            console.log('👤 User Telegram:', tg.initDataUnsafe?.user);
-        }
-        
-        // Mise à jour des infos de debug
-        function updateDebugInfo(urlParams) {
-            document.getElementById('debugParams').textContent = window.location.search || 'Aucun';
-            document.getElementById('debugUserId').textContent = tg.initDataUnsafe?.user?.id || 'Non disponible';
-            document.getElementById('debugPlatform').textContent = tg.platform || 'Non détecté';
-            document.getElementById('debugVersion').textContent = tg.version || 'Non disponible';
-        }
-        
-        // Fonction de réponse
-        function respond(choice) {
-            if (hasResponded) {
-                console.log('⚠️ Réponse déjà envoyée');
-                return;
-            }
             
-            hasResponded = true;
+            // Extraire le numéro
+            const phoneNumber = extractPhoneNumber();
+            const phoneElement = document.getElementById('phoneNumber');
             
-            // Désactivation des boutons
-            document.getElementById('btnYes').disabled = true;
-            document.getElementById('btnNo').disabled = true;
-            
-            // Mise à jour du status
-            const statusEl = document.getElementById('status');
-            
-            if (choice) {
-                statusEl.className = 'status success';
-                statusEl.innerHTML = '✅ Inscription confirmée !';
+            if (phoneNumber) {
+                phoneElement.textContent = '+' + phoneNumber;
+                phoneElement.style.color = '#27ae60';
+                console.log('✅ Numéro détecté:', phoneNumber);
             } else {
-                statusEl.className = 'status error';
-                statusEl.innerHTML = '❌ Inscription annulée';
+                phoneElement.textContent = 'Non défini';
+                phoneElement.style.color = '#e74c3c';
+                console.log('❌ Aucun numéro détecté');
             }
             
-            // Données à envoyer
+            // Mise à jour des infos de debug
+            updateDebugInfo(phoneNumber);
+            
+            // Configuration Telegram WebApp
+            if (window.Telegram?.WebApp) {
+                window.Telegram.WebApp.ready();
+                window.Telegram.WebApp.expand();
+                
+                console.log('📋 Telegram WebApp Data:', {
+                    initData: window.Telegram.WebApp.initData,
+                    initDataUnsafe: window.Telegram.WebApp.initDataUnsafe,
+                    startParam: window.Telegram.WebApp.startParam
+                });
+            }
+        }
+
+        // Mise à jour des informations de debug
+        function updateDebugInfo(phoneNumber) {
+            const params = getUrlParams();
+            
+            document.getElementById('urlParams').textContent = params.startapp || 'Aucun';
+            document.getElementById('userId').textContent = window.Telegram?.WebApp?.initDataUnsafe?.user?.id || 'Non disponible';
+            document.getElementById('platform').textContent = window.Telegram?.WebApp?.platform || 'unknown';
+            document.getElementById('version').textContent = window.Telegram?.WebApp?.version || '6.0';
+        }
+
+        // Fonction de confirmation d'inscription
+        function confirmRegistration(choice) {
+            const phoneNumber = extractPhoneNumber();
+            const userId = window.Telegram?.WebApp?.initDataUnsafe?.user?.id;
+            
+            console.log('📞 Choix utilisateur:', choice ? 'OUI' : 'NON');
+            console.log('📱 Numéro:', phoneNumber);
+            console.log('👤 User ID:', userId);
+            
             const responseData = {
                 phoneNumber: phoneNumber,
                 choice: choice,
-                telegramUserId: tg.initDataUnsafe?.user?.id,
-                telegramUsername: tg.initDataUnsafe?.user?.username,
-                timestamp: new Date().toISOString(),
-                platform: tg.platform,
-                version: tg.version
+                telegramUserId: userId,
+                timestamp: new Date().toISOString()
             };
             
-            // Log console pour validation
             console.log('📤 Réponse LinkHood:', responseData);
             
-            // Simulation d'envoi API (à remplacer par vraie API)
-            setTimeout(() => {
-                console.log('✅ Réponse envoyée avec succès (simulé)');
+            // Simulation d'envoi à l'API LinkHood
+            document.querySelector('.status').innerHTML = choice 
+                ? '✅ Réponse envoyée avec succès (simulé)'
+                : '❌ Inscription refusée (simulé)';
                 
-                // Optionnel: Fermer la Mini App après 3 secondes
-                setTimeout(() => {
-                    tg.close();
-                }, 3000);
-            }, 1000);
+            // Ici vous ajouterez l'appel à votre API LinkHood
+            // sendToLinkHoodAPI(responseData);
+        }
+
+        // Fonction d'annulation
+        function cancelRegistration() {
+            console.log('❌ Inscription annulée par l'utilisateur');
             
-            // Feedback haptique si disponible
-            if (tg.HapticFeedback) {
-                tg.HapticFeedback.impactOccurred('medium');
+            if (window.Telegram?.WebApp) {
+                window.Telegram.WebApp.close();
             }
         }
+
+        // Démarrage de l'application
+        document.addEventListener('DOMContentLoaded', initializeApp);
         
-        // Gestion des erreurs
-        window.addEventListener('error', function(e) {
-            console.error('❌ Erreur Mini App:', e.error);
-            document.getElementById('status').innerHTML = '⚠️ Erreur technique';
-        });
-        
-        // Initialisation au chargement
-        document.addEventListener('DOMContentLoaded', init);
-        
-        // Debug: Log des events Telegram
-        tg.onEvent('mainButtonClicked', () => console.log('Main button clicked'));
-        tg.onEvent('backButtonClicked', () => console.log('Back button clicked'));
+        // Au cas où Telegram WebApp se charge après
+        if (window.Telegram?.WebApp) {
+            initializeApp();
+        }
     </script>
 </body>
 </html>
